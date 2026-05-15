@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dose">
+<meta name="theme-color" content="#2C3830">
+<meta name="description" content="Seu controle diário de medicamentos">
+<title>Dose</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  /* Sage green palette */
+  --sage: #7A9E7E;
+  --sage-dark: #5C8060;
+  --sage-light: #A8C5AC;
+  --sage-pale: #E8F0E8;
+  --sage-muted: rgba(122,158,126,0.15);
+
+  /* Light mode surfaces */
+  --bg: #F5F1EC;
+  --bg-2: #EDE8E1;
+  --surface: #FDFAF6;
+  --surface-2: #F0EBE3;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+
+  /* Light mode text */
+  --text-primary: #1C2016;
+  --text-secondary: #5A5E52;
+  --text-muted: #9A9E92;
+  --text-on-sage: #FFFFFF;
+
+  /* Utility */
+  --danger: #C0392B;
+  --danger-muted: rgba(192,57,43,0.1);
+  --checked-line: rgba(122,158,126,0.4);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+
+  /* Spacing safe area */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+[data-theme="dark"] {
+  --sage: #7A9E7E;
+  --sage-dark: #A8C5AC;
+  --sage-light: #5C8060;
+  --sage-pale: rgba(122,158,126,0.12);
+  --sage-muted: rgba(122,158,126,0.12);
+
+  --bg: #1E201A;
+  --bg-2: #181A14;
+  --surface: #252720;
+  --surface-2: #2E3028;
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.12);
+
+  --text-primary: #F0EDE8;
+  --text-secondary: #A0A498;
+  --text-muted: #686B62;
+  --text-on-sage: #FFFFFF;
+
+  --danger: #E05C50;
+  --danger-muted: rgba(224,92,80,0.12);
+  --checked-line: rgba(122,158,126,0.35);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  font-weight: 400;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  transition: background 0.3s var(--ease-in-out), color 0.3s var(--ease-in-out);
+}
+
+/* ── LAYOUT ─────────────────────────────────────── */
+
+.app {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ── HEADER ─────────────────────────────────────── */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding-top: var(--safe-top);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.3s;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.logo-mark {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.brand-name em {
+  font-style: italic;
+  color: var(--sage);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+.icon-btn:active {
+  background: var(--surface-2);
+}
+
+.icon-btn.active {
+  background: var(--sage-muted);
+  color: var(--sage);
+}
+
+/* ── DAY STRIP ──────────────────────────────────── */
+
+.day-strip-wrap {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: calc(var(--safe-top) + 59px);
+  z-index: 90;
+}
+
+.day-strip {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 4px;
+  padding: 10px 16px 10px;
+}
+
+.day-strip::-webkit-scrollbar { display: none; }
+
+.day-pill {
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  min-width: 52px;
+  position: relative;
+}
+
+.day-pill:active { transform: scale(0.94); }
+
+.day-abbr {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.day-num {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.day-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.15s;
+  margin-top: 1px;
+}
+
+/* today pill */
+.day-pill.is-today .day-num {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.day-pill.is-today .day-abbr { color: var(--text-secondary); }
+.day-pill.is-today .day-dot { background: var(--text-muted); }
+
+/* active/selected */
+.day-pill.is-active {
+  background: var(--sage);
+}
+.day-pill.is-active .day-abbr,
+.day-pill.is-active .day-num {
+  color: #fff;
+}
+.day-pill.is-active .day-dot { background: rgba(255,255,255,0.6); }
+
+/* has progress indicator */
+.day-pill.has-progress .day-dot {
+  background: var(--sage-light);
+}
+.day-pill.is-active.has-progress .day-dot {
+  background: rgba(255,255,255,0.9);
+}
+
+/* ── MAIN CONTENT ───────────────────────────────── */
+
+.main {
+  flex: 1;
+  padding: 24px 20px;
+  padding-bottom: calc(24px + var(--safe-bottom));
+}
+
+/* ── DAY HEADER ─────────────────────────────────── */
+
+.day-header {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.day-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.day-title em {
+  font-style: italic;
+  color: var(--sage);
+}
+
+.progress-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  padding-bottom: 4px;
+}
+
+.progress-label span {
+  color: var(--sage);
+  font-weight: 600;
+}
+
+/* ── PROGRESS BAR ───────────────────────────────── */
+
+.progress-track {
+  height: 2px;
+  background: var(--border-strong);
+  border-radius: 2px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--sage);
+  border-radius: 2px;
+  transition: width 0.4s var(--ease-out);
+}
+
+/* ── MEDICATION LIST ────────────────────────────── */
+
+.med-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.med-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.med-item:first-child {
+  border-top: 1px solid var(--border);
+}
+
+.med-item:active {
+  opacity: 0.7;
+}
+
+/* checkbox */
+.med-check {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-strong);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s var(--ease-out), border-color 0.2s;
+  background: var(--surface);
+}
+
+.med-item.is-checked .med-check {
+  background: var(--sage);
+  border-color: var(--sage);
+}
+
+.med-check svg {
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+}
+
+.med-item.is-checked .med-check svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* label */
+.med-label {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: -0.1px;
+  line-height: 1.3;
+  transition: color 0.2s, text-decoration-color 0.2s;
+  text-decoration-line: line-through;
+  text-decoration-color: transparent;
+}
+
+.med-item.is-checked .med-label {
+  color: var(--text-muted);
+  text-decoration-color: var(--checked-line);
+}
+
+/* delete button (edit mode) */
+.med-delete {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: var(--danger-muted);
+  color: var(--danger);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.med-delete:active { transform: scale(0.88); }
+
+.is-edit-mode .med-delete { display: flex; }
+.is-edit-mode .med-item { cursor: default; }
+.is-edit-mode .med-item:active { opacity: 1; }
+
+/* ── EMPTY STATE ─────────────────────────────────── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-icon {
+  color: var(--border-strong);
+  margin-bottom: 4px;
+}
+
+.empty-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.empty-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 220px;
+}
+
+/* ── FAB ─────────────────────────────────────────── */
+
+.fab {
+  position: fixed;
+  bottom: calc(28px + var(--safe-bottom));
+  right: 50%;
+  transform: translateX(calc(50% + 0px));
+  max-width: 390px;
+  width: calc(100% - 40px);
+  display: none;
+}
+
+.fab-btn {
+  width: 100%;
+  height: 54px;
+  border-radius: 17px;
+  border: none;
+  background: var(--sage);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(92,128,96,0.35);
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s;
+  -webkit-appearance: none;
+}
+
+.fab-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 10px rgba(92,128,96,0.25);
+}
+
+.is-edit-mode ~ .fab { display: block; }
+/* actually show based on edit mode class on body */
+
+/* ── MODAL / SHEET ───────────────────────────────── */
+
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s var(--ease-in-out);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.sheet-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  z-index: 201;
+  padding: 0 24px;
+  padding-bottom: calc(24px + var(--safe-bottom));
+  transform: translateY(100%);
+  transition: transform 0.35s var(--ease-out);
+  box-shadow: 0 -4px 40px rgba(0,0,0,0.15);
+}
+
+.sheet.visible {
+  transform: translateY(0);
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  margin: 12px auto 20px;
+}
+
+.sheet-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.sheet-input {
+  width: 100%;
+  height: 52px;
+  border-radius: 13px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  padding: 0 16px;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+
+.sheet-input:focus {
+  border-color: var(--sage);
+}
+
+.sheet-input::placeholder { color: var(--text-muted); }
+
+.sheet-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn {
+  flex: 1;
+  height: 50px;
+  border-radius: 13px;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.12s var(--ease-out), opacity 0.12s;
+  -webkit-appearance: none;
+}
+
+.btn:active { transform: scale(0.96); opacity: 0.85; }
+
+.btn-ghost {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+}
+
+.btn-primary {
+  background: var(--sage);
+  color: #fff;
+}
+
+/* ── CONFIRM DIALOG ──────────────────────────────── */
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.confirm-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.confirm-box {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 28px 24px 20px;
+  max-width: 320px;
+  width: 100%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  transform: scale(0.94);
+  transition: transform 0.2s var(--ease-out);
+}
+
+.confirm-overlay.visible .confirm-box {
+  transform: scale(1);
+}
+
+.confirm-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.confirm-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ── TOAST ───────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  bottom: calc(100px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text-primary);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 50px;
+  white-space: nowrap;
+  z-index: 400;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s var(--ease-out);
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── SETTINGS PANEL ──────────────────────────────── */
+
+.settings-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  z-index: 201;
+  padding: 0 24px;
+  padding-bottom: calc(32px + var(--safe-bottom));
+  transform: translateY(100%);
+  transition: transform 0.35s var(--ease-out);
+  box-shadow: 0 -4px 40px rgba(0,0,0,0.15);
+}
+
+.settings-sheet.visible { transform: translateY(0); }
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-row:last-child { border-bottom: none; }
+
+.settings-label {
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+.settings-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* toggle */
+.toggle {
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--border-strong);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  border: none;
+  -webkit-appearance: none;
+}
+
+.toggle.on { background: var(--sage); }
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  top: 3px;
+  left: 3px;
+  transition: left 0.2s var(--ease-out);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.toggle.on::after { left: 23px; }
+
+/* ── ANIMATIONS ──────────────────────────────────── */
+
+@keyframes checkPop {
+  0% { transform: scale(0.8); }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.med-item.just-checked .med-check {
+  animation: checkPop 0.25s var(--ease-out);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.med-item {
+  animation: slideIn 0.25s var(--ease-out) both;
+}
+
+/* stagger children */
+.med-item:nth-child(1)  { animation-delay: 0ms; }
+.med-item:nth-child(2)  { animation-delay: 30ms; }
+.med-item:nth-child(3)  { animation-delay: 60ms; }
+.med-item:nth-child(4)  { animation-delay: 90ms; }
+.med-item:nth-child(5)  { animation-delay: 120ms; }
+.med-item:nth-child(6)  { animation-delay: 150ms; }
+.med-item:nth-child(7)  { animation-delay: 180ms; }
+.med-item:nth-child(8)  { animation-delay: 210ms; }
+.med-item:nth-child(9)  { animation-delay: 240ms; }
+.med-item:nth-child(n+10) { animation-delay: 270ms; }
+
+/* ── EDIT MODE TOGGLE ────────────────────────────── */
+
+.edit-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.edit-bar.visible { display: flex; }
+
+.edit-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sage);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.edit-done {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sage);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  -webkit-appearance: none;
+}
+
+/* ── SCROLLBAR HIDE ──────────────────────────────── */
+
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <!-- Logo Mark: precision cross / timeline hybrid -->
+        <svg class="logo-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="9" fill="#2C3830"/>
+          <!-- Horizontal mark -->
+          <rect x="7" y="15" width="18" height="2" rx="1" fill="#7A9E7E"/>
+          <!-- Vertical mark (shorter, offset) -->
+          <rect x="15" y="8" width="2" height="10" rx="1" fill="#A8C5AC"/>
+          <!-- Dot — checked state indicator -->
+          <circle cx="22" cy="22" r="2.5" fill="#7A9E7E"/>
+          <circle cx="22" cy="22" r="1.2" fill="#2C3830"/>
+        </svg>
+        <span class="brand-name">D<em>ose</em></span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="settingsBtn" aria-label="Configurações">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M9 1.5v1.8M9 14.7v1.8M1.5 9h1.8M14.7 9h1.8M3.6 3.6l1.27 1.27M13.13 13.13l1.27 1.27M14.4 3.6l-1.27 1.27M4.87 13.13l-1.27 1.27" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="editBtn" aria-label="Editar medicamentos">
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+            <path d="M2 13.5L5.5 10 12.5 3l1.5 1.5-7 7-3.5 3.5L2 13.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M11 4.5l1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- EDIT BAR -->
+  <div class="edit-bar" id="editBar">
+    <span class="edit-label">Modo edição</span>
+    <button class="edit-done" id="editDone">Concluir</button>
+  </div>
+
+  <!-- DAY STRIP -->
+  <div class="day-strip-wrap">
+    <div class="day-strip" id="dayStrip"></div>
+  </div>
+
+  <!-- MAIN -->
+  <main class="main" id="mainContent">
+    <div class="day-header">
+      <div>
+        <div class="day-title" id="dayTitle">—</div>
+      </div>
+      <div class="progress-label" id="progressLabel"></div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="med-list" id="medList"></div>
+  </main>
+
+  <!-- ADD FAB (visible in edit mode) -->
+  <div class="fab" id="fab" style="display:none;">
+    <button class="fab-btn" id="addMedBtn">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M9 3v12M3 9h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Adicionar medicamento
+    </button>
+  </div>
+
+</div>
+
+<!-- ADD SHEET -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="sheet" id="addSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Novo medicamento</div>
+  <input type="text" class="sheet-input" id="medInput" placeholder="Nome do medicamento" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="60">
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" id="cancelAddBtn">Cancelar</button>
+    <button class="btn btn-primary" id="confirmAddBtn">Adicionar</button>
+  </div>
+</div>
+
+<!-- SETTINGS SHEET -->
+<div class="settings-sheet" id="settingsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" style="margin-bottom:4px;">Configurações</div>
+  <div style="margin-bottom:20px; font-size:13px; color:var(--text-muted);">Dose • versão 1.0</div>
+
+  <div class="settings-row">
+    <div>
+      <div class="settings-label">Tema escuro</div>
+      <div class="settings-sub">Superfícies quentes e contrastadas</div>
+    </div>
+    <button class="toggle" id="darkToggle"></button>
+  </div>
+
+  <div class="settings-row">
+    <div>
+      <div class="settings-label">Sobre o Dose</div>
+      <div class="settings-sub">Controle diário de medicamentos, offline</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-name" id="confirmName"></div>
+    <div class="confirm-sub">Isso removerá o medicamento de todos os dias da semana.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="cancelDeleteBtn" style="flex:1">Cancelar</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn" style="flex:1">Remover</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  DOSE — State & Storage
+// ═══════════════════════════════════════════════════
+
+const DAYS = [
+  { key: 'seg', label: 'Segunda-feira', abbr: 'Seg', jsDay: 1 },
+  { key: 'ter', label: 'Terça-feira',   abbr: 'Ter', jsDay: 2 },
+  { key: 'qua', label: 'Quarta-feira',  abbr: 'Qua', jsDay: 3 },
+  { key: 'qui', label: 'Quinta-feira',  abbr: 'Qui', jsDay: 4 },
+  { key: 'sex', label: 'Sexta-feira',   abbr: 'Sex', jsDay: 5 },
+  { key: 'sab', label: 'Sábado',        abbr: 'Sáb', jsDay: 6 },
+  { key: 'dom', label: 'Domingo',       abbr: 'Dom', jsDay: 0 },
+];
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('dose_state') || 'null'); } catch { return null; }
+}
+
+function saveState(state) {
+  localStorage.setItem('dose_state', JSON.stringify(state));
+}
+
+function getInitialState() {
+  const medications = [];
+  const checks = {};
+  DAYS.forEach(d => { checks[d.key] = {}; });
+  return { medications, checks, lastResetMonday: null, darkMode: false };
+}
+
+let state = loadState() || getInitialState();
+
+// ── WEEKLY RESET LOGIC ──────────────────────────────
+// Guarda a data da segunda-feira em que o último reset ocorreu.
+// O reset só executa UMA VEZ por semana: quando a segunda-feira
+// atual for diferente da segunda-feira do último reset.
+// Isso garante que abrir o app várias vezes na segunda não reseta
+// os dados repetidamente.
+
+function getMondayStr(date) {
+  // Retorna a string YYYY-MM-DD da segunda-feira da semana de `date`
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Dom, 1=Seg...
+  const diff = (day === 0) ? -6 : 1 - day; // quantos dias até a seg anterior (ou hoje)
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().split('T')[0];
+}
+
+function applyWeeklyResets() {
+  const now = new Date();
+  const thisMondayStr = getMondayStr(now);
+  const lastResetMonday = state.lastResetMonday || null;
+
+  // Só reseta se nunca resetou OU se a segunda-feira desta semana
+  // é diferente da segunda-feira em que o último reset aconteceu.
+  if (lastResetMonday === thisMondayStr) {
+    return; // já resetou nesta semana — não faz nada
+  }
+
+  // É uma semana nova: zera os checks de todos os dias
+  DAYS.forEach(d => {
+    const fresh = {};
+    state.medications.forEach(m => { fresh[m.id] = false; });
+    state.checks[d.key] = fresh;
+  });
+
+  state.lastResetMonday = thisMondayStr;
+  saveState(state);
+}
+
+// ── CURRENT DAY ─────────────────────────────────────
+function getTodayKey() {
+  const jsDay = new Date().getDay();
+  return DAYS.find(d => d.jsDay === jsDay)?.key || 'seg';
+}
+
+let activeDay = getTodayKey();
+let isEditMode = false;
+let pendingDeleteId = null;
+
+// ── APPLY RESETS ON LOAD ────────────────────────────
+applyWeeklyResets();
+
+// Ensure checks are synced with medication list
+function syncChecks() {
+  DAYS.forEach(d => {
+    if (!state.checks[d.key]) state.checks[d.key] = {};
+    state.medications.forEach(m => {
+      if (state.checks[d.key][m.id] === undefined) {
+        state.checks[d.key][m.id] = false;
+      }
+    });
+    // Remove orphaned checks
+    Object.keys(state.checks[d.key]).forEach(id => {
+      if (!state.medications.find(m => m.id === id)) {
+        delete state.checks[d.key][id];
+      }
+    });
+  });
+}
+
+syncChecks();
+
+// ═══════════════════════════════════════════════════
+//  THEME
+// ═══════════════════════════════════════════════════
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : 'light');
+  darkToggle.classList.toggle('on', state.darkMode);
+}
+
+// ═══════════════════════════════════════════════════
+//  DOM REFERENCES
+// ═══════════════════════════════════════════════════
+
+const dayStrip      = document.getElementById('dayStrip');
+const dayTitle      = document.getElementById('dayTitle');
+const progressLabel = document.getElementById('progressLabel');
+const progressFill  = document.getElementById('progressFill');
+const medList       = document.getElementById('medList');
+const editBtn       = document.getElementById('editBtn');
+const editBar       = document.getElementById('editBar');
+const editDone      = document.getElementById('editDone');
+const fab           = document.getElementById('fab');
+const addMedBtn     = document.getElementById('addMedBtn');
+const sheetOverlay  = document.getElementById('sheetOverlay');
+const addSheet      = document.getElementById('addSheet');
+const medInput      = document.getElementById('medInput');
+const cancelAddBtn  = document.getElementById('cancelAddBtn');
+const confirmAddBtn = document.getElementById('confirmAddBtn');
+const settingsBtn   = document.getElementById('settingsBtn');
+const settingsSheet = document.getElementById('settingsSheet');
+const darkToggle    = document.getElementById('darkToggle');
+const confirmOverlay   = document.getElementById('confirmOverlay');
+const confirmName      = document.getElementById('confirmName');
+const cancelDeleteBtn  = document.getElementById('cancelDeleteBtn');
+const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+const toast = document.getElementById('toast');
+
+// ═══════════════════════════════════════════════════
+//  DAY STRIP
+// ═══════════════════════════════════════════════════
+
+function renderDayStrip() {
+  const todayKey = getTodayKey();
+  dayStrip.innerHTML = '';
+  DAYS.forEach(d => {
+    // Get day number (date of the week)
+    const today = new Date();
+    const todayJsDay = today.getDay();
+    const diff = d.jsDay - todayJsDay;
+    const date = new Date(today);
+    date.setDate(today.getDate() + diff);
+    const dayNum = date.getDate();
+
+    // Progress
+    const checks = state.checks[d.key] || {};
+    const total = state.medications.length;
+    const done = Object.values(checks).filter(Boolean).length;
+    const hasProgress = total > 0 && done > 0;
+
+    const pill = document.createElement('button');
+    pill.className = 'day-pill' +
+      (d.key === todayKey ? ' is-today' : '') +
+      (d.key === activeDay ? ' is-active' : '') +
+      (hasProgress ? ' has-progress' : '');
+    pill.innerHTML = `<span class="day-abbr">${d.abbr}</span><span class="day-num">${dayNum}</span><span class="day-dot"></span>`;
+    pill.addEventListener('click', () => { activeDay = d.key; renderAll(); scrollActiveDay(); });
+    dayStrip.appendChild(pill);
+  });
+}
+
+function scrollActiveDay() {
+  const activeEl = dayStrip.querySelector('.is-active');
+  if (activeEl) {
+    activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  MED LIST
+// ═══════════════════════════════════════════════════
+
+function renderMedList() {
+  const dayData = DAYS.find(d => d.key === activeDay);
+
+  // Day title (split for italic last word)
+  const label = dayData.label;
+  const words = label.split('-');
+  if (words.length >= 2) {
+    dayTitle.innerHTML = `${words[0]}<em>-${words.slice(1).join('-')}</em>`;
+  } else {
+    dayTitle.textContent = label;
+  }
+
+  const checks = state.checks[activeDay] || {};
+  const total = state.medications.length;
+  const done = Object.values(checks).filter(Boolean).length;
+
+  // Progress
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+  progressFill.style.width = pct + '%';
+  if (total === 0) {
+    progressLabel.textContent = '';
+  } else {
+    progressLabel.innerHTML = `<span>${done}</span> / ${total}`;
+  }
+
+  // List
+  medList.innerHTML = '';
+
+  if (state.medications.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = `
+      <svg class="empty-icon" width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <rect x="8" y="16" width="24" height="17" rx="4" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M14 16V12a6 6 0 0112 0v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="20" cy="24.5" r="2.5" fill="currentColor" opacity="0.4"/>
+      </svg>
+      <div class="empty-title">Nenhum medicamento</div>
+      <div class="empty-sub">Toque em Editar para adicionar seus medicamentos</div>
+    `;
+    medList.appendChild(empty);
+    return;
+  }
+
+  state.medications.forEach((med, idx) => {
+    const checked = !!checks[med.id];
+    const item = document.createElement('div');
+    item.className = 'med-item' + (checked ? ' is-checked' : '') + (isEditMode ? ' edit-mode' : '');
+    item.dataset.id = med.id;
+    item.style.animationDelay = Math.min(idx * 30, 270) + 'ms';
+
+    item.innerHTML = `
+      <div class="med-check">
+        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+          <path d="M1 5l3.5 3.5L11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="med-label">${escHtml(med.name)}</span>
+      <button class="med-delete" data-id="${med.id}" aria-label="Remover ${escHtml(med.name)}">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    `;
+
+    // Toggle check (only when not in edit mode)
+    item.addEventListener('click', (e) => {
+      if (isEditMode) return;
+      if (e.target.closest('.med-delete')) return;
+      toggleCheck(med.id, item);
+    });
+
+    // Delete
+    const deleteBtn = item.querySelector('.med-delete');
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openConfirmDelete(med.id, med.name);
+    });
+
+    medList.appendChild(item);
+  });
+}
+
+function toggleCheck(id, item) {
+  const checks = state.checks[activeDay];
+  checks[id] = !checks[id];
+  saveState(state);
+  item.classList.toggle('is-checked', !!checks[id]);
+  item.classList.add('just-checked');
+  setTimeout(() => item.classList.remove('just-checked'), 300);
+  updateProgress();
+  renderDayStrip();
+}
+
+function updateProgress() {
+  const checks = state.checks[activeDay] || {};
+  const total = state.medications.length;
+  const done = Object.values(checks).filter(Boolean).length;
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+  progressFill.style.width = pct + '%';
+  if (total === 0) {
+    progressLabel.textContent = '';
+  } else {
+    progressLabel.innerHTML = `<span>${done}</span> / ${total}`;
+  }
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════
+//  EDIT MODE
+// ═══════════════════════════════════════════════════
+
+function setEditMode(on) {
+  isEditMode = on;
+  editBtn.classList.toggle('active', on);
+  editBar.classList.toggle('visible', on);
+  fab.style.display = on ? 'block' : 'none';
+
+  // Toggle edit class on all med items (so delete buttons show)
+  medList.querySelectorAll('.med-item').forEach(el => {
+    el.classList.toggle('is-edit-mode', on);
+  });
+}
+
+editBtn.addEventListener('click', () => setEditMode(!isEditMode));
+editDone.addEventListener('click', () => setEditMode(false));
+
+// ═══════════════════════════════════════════════════
+//  ADD MEDICATION
+// ═══════════════════════════════════════════════════
+
+function openAddSheet() {
+  medInput.value = '';
+  sheetOverlay.classList.add('visible');
+  addSheet.classList.add('visible');
+  setTimeout(() => medInput.focus(), 350);
+}
+
+function closeAddSheet() {
+  sheetOverlay.classList.remove('visible');
+  addSheet.classList.remove('visible');
+  medInput.blur();
+}
+
+function addMedication() {
+  const name = medInput.value.trim();
+  if (!name) { medInput.focus(); return; }
+
+  const med = { id: Date.now().toString(36) + Math.random().toString(36).slice(2), name };
+  state.medications.push(med);
+  DAYS.forEach(d => { state.checks[d.key][med.id] = false; });
+  saveState(state);
+  closeAddSheet();
+  renderAll();
+  showToast(`"${name}" adicionado`);
+}
+
+addMedBtn.addEventListener('click', openAddSheet);
+cancelAddBtn.addEventListener('click', closeAddSheet);
+confirmAddBtn.addEventListener('click', addMedication);
+sheetOverlay.addEventListener('click', () => { closeAddSheet(); closeSettings(); });
+medInput.addEventListener('keydown', e => { if (e.key === 'Enter') addMedication(); });
+
+// ═══════════════════════════════════════════════════
+//  DELETE MEDICATION
+// ═══════════════════════════════════════════════════
+
+function openConfirmDelete(id, name) {
+  pendingDeleteId = id;
+  confirmName.textContent = `Remover "${name}"?`;
+  confirmOverlay.classList.add('visible');
+}
+
+function closeConfirm() {
+  confirmOverlay.classList.remove('visible');
+  pendingDeleteId = null;
+}
+
+function deleteMedication() {
+  if (!pendingDeleteId) return;
+  const id = pendingDeleteId;
+  const med = state.medications.find(m => m.id === id);
+  const name = med?.name || '';
+  state.medications = state.medications.filter(m => m.id !== id);
+  DAYS.forEach(d => { delete state.checks[d.key][id]; });
+  saveState(state);
+  closeConfirm();
+  renderAll();
+  showToast(`"${name}" removido`);
+}
+
+cancelDeleteBtn.addEventListener('click', closeConfirm);
+confirmDeleteBtn.addEventListener('click', deleteMedication);
+confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) closeConfirm(); });
+
+// ═══════════════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════════════
+
+function openSettings() {
+  sheetOverlay.classList.add('visible');
+  settingsSheet.classList.add('visible');
+  settingsBtn.classList.add('active');
+}
+
+function closeSettings() {
+  settingsSheet.classList.remove('visible');
+  if (!addSheet.classList.contains('visible')) {
+    sheetOverlay.classList.remove('visible');
+  }
+  settingsBtn.classList.remove('active');
+}
+
+settingsBtn.addEventListener('click', () => {
+  if (settingsSheet.classList.contains('visible')) closeSettings();
+  else openSettings();
+});
+
+darkToggle.addEventListener('click', () => {
+  state.darkMode = !state.darkMode;
+  saveState(state);
+  applyTheme();
+});
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER ALL
+// ═══════════════════════════════════════════════════
+
+function renderAll() {
+  renderDayStrip();
+  renderMedList();
+  if (isEditMode) setEditMode(true); // reapply edit state to new items
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+
+applyTheme();
+renderAll();
+scrollActiveDay();
+
+// ═══════════════════════════════════════════════════
+//  SERVICE WORKER REGISTRATION
+// ═══════════════════════════════════════════════════
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

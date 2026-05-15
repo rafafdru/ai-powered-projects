@@ -1,0 +1,26 @@
+{
+  "name": "Dose — Controle de Medicamentos",
+  "short_name": "Dose",
+  "description": "Seu controle diário de medicamentos. Premium, offline, confiável.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1E201A",
+  "theme_color": "#2C3830",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "lifestyle", "medical"]
+}
