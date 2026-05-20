@@ -1014,13 +1014,16 @@ let state = loadState() || getInitialState();
 // os dados repetidamente.
 
 function getMondayStr(date) {
-  // Retorna a string YYYY-MM-DD da segunda-feira da semana de `date`
   const d = new Date(date);
-  const day = d.getDay(); // 0=Dom, 1=Seg...
-  const diff = (day === 0) ? -6 : 1 - day; // quantos dias até a seg anterior (ou hoje)
+  const day = d.getDay();
+  const diff = (day === 0) ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
   d.setHours(0, 0, 0, 0);
-  return d.toISOString().split('T')[0];
+  // ← CORREÇÃO: usar data local, não UTC
+  const yyyy = d.getFullYear();
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const dd   = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function applyWeeklyResets() {
