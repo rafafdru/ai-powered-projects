@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { jogos } from '../dados';
 
-const SENHA_ADMIN = 'admin2026';
+const SENHA_ADMIN = 'Romanos12,2';
 const DOC_GLOBAL = 'global';
 
 const FASES_MM = [
