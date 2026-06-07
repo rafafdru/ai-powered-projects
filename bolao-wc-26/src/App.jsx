@@ -178,7 +178,7 @@ function App() {
     };
 
     carregar();
-  }, [usuario, tela]);
+  }, [usuario]);
 
   // ── Ref para garantir que notificações só são agendadas uma vez por sessão ──
   const notifAgendadasRef = { current: false };
