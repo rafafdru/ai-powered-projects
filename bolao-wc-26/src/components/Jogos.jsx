@@ -272,6 +272,8 @@ export default function Jogos({ usuario, palpites, onSalvar, resultados }) {
   function handleChange(jogoId, campo, valor) {
     const num = valor.replace(/\D/g, '').slice(0, 2);
     setEditando((prev) => ({ ...prev, [jogoId]: { ...prev[jogoId], [campo]: num } }));
+    // Reativa o botão salvar quando o usuário começa a editar um palpite já salvo
+    setSavedIds((prev) => { const n = { ...prev }; delete n[jogoId]; return n; });
   }
 
   function getPalpite(jogoId) {
