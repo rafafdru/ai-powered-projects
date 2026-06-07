@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!-- ── Viewport ─────────────────────────────────────────────────────── -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+
+    <!-- ── Identidade ───────────────────────────────────────────────────── -->
+    <title>Bolão Copa 26</title>
+    <meta
+      name="description"
+      content="Bolão de palpites da Copa do Mundo FIFA 2026 com seus amigos."
+    />
+    <meta name="theme-color" content="#000000" />
+
+    <!-- ── PWA Manifest ──────────────────────────────────────────────────── -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- ── Ícones gerais ─────────────────────────────────────────────────── -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/icons/icon-192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="512x512"
+      href="/icons/icon-512.png"
+    />
+
+    <!-- ── iOS (Safari / Add to Home Screen) ────────────────────────────── -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Bolão 26" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+    <!-- ── Splash screen iOS (fundo preto + tema) ───────────────────────── -->
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
+
+    <!-- ── Open Graph (compartilhamento) ────────────────────────────────── -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Bolão Copa 26" />
+    <meta
+      property="og:description"
+      content="Faça seus palpites e dispute com seus amigos na Copa do Mundo 2026."
+    />
+    <meta property="og:image" content="/icons/icon-512.png" />
+
+    <!-- ── Estilo base para evitar flash branco no carregamento ─────────── -->
+    <style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  html, body, #root {
+    min-height: 100vh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+</style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
