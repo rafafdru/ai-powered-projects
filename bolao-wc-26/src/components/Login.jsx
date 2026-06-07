@@ -106,7 +106,7 @@ const CARDS_LOGIN = [
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {[
-            ['Apenas letras minúsculas', 'ex: joao, rafa, carol'],
+            ['Apenas letras minúsculas', 'ex: joao, cristiano, jose'],
             ['Máximo 20 caracteres', 'Curto e direto ao ponto'],
             ['Não pode repetir no grupo', 'Cada membro precisa de um nome único'],
           ].map(([regra, ex]) => (
