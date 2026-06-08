@@ -137,9 +137,7 @@ function CardJogo({ jogo, palpite, jaFoiSalvo, salvando, foiSalvoAgora, onSalvar
   const feedback = calcularFeedback(palpite, resultado);
   const temResultado = resultado && resultado.g1 !== '' && resultado.g2 !== '';
 
-  const sceneRef = useRef(null);
-  // fases: idle → girando → expandido → recolhendo → idle
-  const [fase, setFase] = useState('idle');
+  const [fase, setFase] = useState('idle'); // idle | girando | expandido | fechando
 
   const listaPalpitesGrupo = Object.entries(palpitesDoGrupo).map(([apelido, pals]) => ({
     apelido,
@@ -149,15 +147,13 @@ function CardJogo({ jogo, palpite, jaFoiSalvo, salvando, foiSalvoAgora, onSalvar
   function abrirModal() {
     if (fase !== 'idle') return;
     setFase('girando');
-    // após o giro (700ms), expande
     setTimeout(() => setFase('expandido'), 700);
   }
 
   function fecharModal() {
     if (fase !== 'expandido') return;
-    setFase('recolhendo');
-    // recolhe primeiro, depois desgira
-    setTimeout(() => setFase('girando'), 350);
+    setFase('fechando');
+    setTimeout(() => setFase('girando-volta'), 350);
     setTimeout(() => setFase('idle'), 350 + 700);
     onVirar();
   }
@@ -176,183 +172,179 @@ function CardJogo({ jogo, palpite, jaFoiSalvo, salvando, foiSalvoAgora, onSalvar
     ? '1px solid rgba(255,255,255,0.05)'
     : '1px solid rgba(201,168,76,0.15)';
 
-  // altura da scene: normal ou expandida
-  const sceneExpandida = fase === 'expandido';
-  const cardGirado = fase === 'girando' || fase === 'expandido' || fase === 'recolhendo';
+  const cardGirado = fase === 'girando' || fase === 'expandido' || fase === 'fechando';
+  const expandido = fase === 'expandido';
+  const ativo = fase !== 'idle';
+
+  // Conteúdo da frente — extraído para reutilizar
+  const frenteContent = (
+    <>
+      {/* Top bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 8px', borderBottom: '1px solid rgba(255,255,255,0.04)', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          {!bloqueado && countdown ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#2ecc71', boxShadow: '0 0 6px #2ecc71', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(46,204,113,0.7)' }}>FECHA EM</div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '18px', fontWeight: 900, color: '#2ecc71', lineHeight: 1, letterSpacing: '1px' }}>{countdown}</div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.2)' }}>ENCERRADO</div>
+          )}
+        </div>
+        {temResultado && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', flex: 1 }}>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.3)' }}>PLACAR REAL</div>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '16px', fontWeight: 900, color: 'rgba(255,255,255,0.75)', letterSpacing: '3px', lineHeight: 1 }}>{resultado.g1} × {resultado.g2}</div>
+          </div>
+        )}
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '9px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(201,168,76,0.6)' }}>GRUPO {jogo.grupo}</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.5px' }}>{formatarData(jogo.data)} · {jogo.hora}</div>
+        </div>
+      </div>
+      {/* Match body */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '16px 14px 14px', gap: '8px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+          {getFlag(jogo.time1) && <img src={getFlag(jogo.time1)} alt={jogo.time1} style={{ width: '40px', height: '28px', objectFit: 'cover', borderRadius: '4px', opacity: bloqueado ? 0.5 : 1 }} />}
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: bloqueado ? 'rgba(255,255,255,0.3)' : '#fff', letterSpacing: '0.5px', lineHeight: 1 }}>{jogo.time1.toUpperCase()}</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          {bloqueado ? (
+            <><div style={styles.scoreLocked}>{palpite?.g1 ?? '—'}</div><div style={styles.scoreSep}>×</div><div style={styles.scoreLocked}>{palpite?.g2 ?? '—'}</div></>
+          ) : (
+            <><input style={styles.scoreInput} value={palpite?.g1 ?? ''} onChange={(e) => onChange('g1', e.target.value)} maxLength={2} inputMode="numeric" /><div style={styles.scoreSep}>×</div><input style={styles.scoreInput} value={palpite?.g2 ?? ''} onChange={(e) => onChange('g2', e.target.value)} maxLength={2} inputMode="numeric" /></>
+          )}
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+          {getFlag(jogo.time2) && <img src={getFlag(jogo.time2)} alt={jogo.time2} style={{ width: '40px', height: '28px', objectFit: 'cover', borderRadius: '4px', opacity: bloqueado ? 0.5 : 1 }} />}
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: bloqueado ? 'rgba(255,255,255,0.3)' : '#fff', letterSpacing: '0.5px', lineHeight: 1, textAlign: 'right' }}>{jogo.time2.toUpperCase()}</div>
+        </div>
+      </div>
+      {bloqueado && feedback && <FeedbackBar feedback={feedback} />}
+      {!bloqueado && (
+        <div style={{ padding: '0 14px 10px' }}>
+          <button onClick={salvo ? undefined : onSalvar} style={{ width: '100%', borderRadius: '10px', padding: '11px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 900, letterSpacing: '3px', cursor: salvo ? 'default' : 'pointer', border: 'none', background: salvo ? 'rgba(46,204,113,0.08)' : salvando ? 'rgba(201,168,76,0.08)' : temPalpite ? 'linear-gradient(135deg, #C9A84C 0%, #a8752a 100%)' : 'rgba(201,168,76,0.08)', color: salvo ? '#2ecc71' : salvando ? '#C9A84C' : temPalpite ? '#000' : 'rgba(201,168,76,0.4)', boxShadow: !salvo && !salvando && temPalpite ? '0 4px 20px rgba(201,168,76,0.25)' : 'none' }}>
+            {salvo ? '✓  PALPITE SALVO' : salvando ? 'SALVANDO...' : 'SALVAR PALPITE'}
+          </button>
+        </div>
+      )}
+      <div style={{ padding: '0 14px 12px' }}>
+        <button onClick={abrirModal} style={{ width: '100%', borderRadius: '10px', padding: '8px', background: 'none', border: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.25)' }}>VER PALPITES DO GRUPO</span>
+        </button>
+      </div>
+    </>
+  );
+
+  // Verso — lista de palpites
+  const versoContent = (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+        <div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(201,168,76,0.5)', marginBottom: '2px' }}>PALPITES DO GRUPO</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '15px', fontWeight: 900, color: '#fff' }}>{jogo.time1.toUpperCase()} × {jogo.time2.toUpperCase()}</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)', marginTop: '2px' }}>{formatarData(jogo.data)} · {jogo.hora}</div>
+        </div>
+        <button onClick={fecharModal} style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255,255,255,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div style={{ overflowY: 'auto', flex: 1, padding: '4px 0' }}>
+        {listaPalpitesGrupo.length === 0 ? (
+          <div style={{ padding: '32px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.2)', letterSpacing: '2px', textAlign: 'center' }}>NENHUM PALPITE AINDA</div>
+        ) : listaPalpitesGrupo.map(({ apelido, palpite: pal }, idx) => {
+          const isVoce = apelido === usuarioAtual;
+          const temPal = pal && pal.g1 !== undefined && pal.g2 !== undefined && pal.g1 !== '' && pal.g2 !== '';
+          return (
+            <div key={apelido} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', background: isVoce ? 'rgba(201,168,76,0.06)' : 'transparent', borderBottom: idx < listaPalpitesGrupo.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: isVoce ? 'linear-gradient(135deg, #C9A84C, #a8752a)' : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 900, color: isVoce ? '#000' : 'rgba(255,255,255,0.4)', flexShrink: 0 }}>
+                  {apelido[0].toUpperCase()}
+                </div>
+                <div>
+                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>{apelido.toUpperCase()}</span>
+                  {isVoce && <span style={{ marginLeft: '6px', fontSize: '9px', color: 'rgba(201,168,76,0.4)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '1px' }}>VOCÊ</span>}
+                </div>
+              </div>
+              <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '20px', fontWeight: 900, color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.45)', letterSpacing: '3px' }}>
+                {temPal ? `${pal.g1} × ${pal.g2}` : <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.15)', letterSpacing: '1px' }}>— × —</span>}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ padding: '12px 16px 16px', borderTop: '1px solid rgba(255,255,255,0.04)', flexShrink: 0 }}>
+        <button onClick={fecharModal} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}>FECHAR</button>
+      </div>
+    </>
+  );
 
   return (
     <>
       {/* Overlay */}
-      {fase !== 'idle' && (
-        <div
-          onClick={fecharModal}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 50,
-            background: sceneExpandida ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0)',
-            backdropFilter: sceneExpandida ? 'blur(16px)' : 'none',
-            WebkitBackdropFilter: sceneExpandida ? 'blur(16px)' : 'none',
-            transition: 'background 0.4s ease, backdrop-filter 0.4s ease',
-            pointerEvents: sceneExpandida ? 'auto' : 'none',
-          }}
-        />
+      {ativo && (
+        <div onClick={fecharModal} style={{ position: 'fixed', inset: 0, zIndex: 50, background: expandido ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0)', backdropFilter: expandido ? 'blur(16px)' : 'none', WebkitBackdropFilter: expandido ? 'blur(16px)' : 'none', transition: 'background 0.4s ease, backdrop-filter 0.4s ease', pointerEvents: expandido ? 'auto' : 'none' }} />
       )}
 
-      {/* Scene — perspective container */}
-      <div
-        ref={sceneRef}
-        style={{
+      {/* Card normal (visível em idle) */}
+      {!ativo && (
+        <div style={{ marginBottom: '10px', borderRadius: '16px', overflow: 'hidden', background: bloqueado ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.03)', border: borda }}>
+          {frenteContent}
+        </div>
+      )}
+
+      {/* Spacer quando ativo para manter o layout */}
+      {ativo && <div style={{ marginBottom: '10px', height: '1px' }} />}
+
+      {/* Card animado — fixo na tela quando ativo */}
+      {ativo && (
+        <div style={{
+          position: 'fixed',
+          zIndex: 60,
+          // posição e tamanho animam entre card normal e modal expandido
+          top: expandido ? '50%' : '40%',
+          left: expandido ? '50%' : '50%',
+          width: expandido ? 'min(460px, 92vw)' : 'calc(100vw - 28px)',
+          maxHeight: expandido ? '82vh' : '0px',
+          transform: expandido ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          background: '#0d0d0d',
+          border: '1px solid rgba(201,168,76,0.2)',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+          // perspectiva para o flip
           perspective: '1200px',
-          marginBottom: '10px',
-          position: fase !== 'idle' ? 'relative' : 'static',
-          zIndex: fase !== 'idle' ? 60 : 'auto',
-          // altura anima entre normal e expandida
-          height: sceneExpandida ? '82vh' : 'auto',
-          transition: 'height 0.55s cubic-bezier(0.32,0.72,0,1)',
-        }}
-      >
-        {/* Card com flip */}
-        <div
-          style={{
+        }}>
+          {/* Inner flip */}
+          <div style={{
             width: '100%',
             height: '100%',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
             position: 'relative',
             transformStyle: 'preserve-3d',
             transform: cardGirado ? 'rotateY(180deg)' : 'rotateY(0deg)',
             transition: 'transform 0.7s cubic-bezier(0.4,0,0.2,1)',
-            transformOrigin: 'center center',
-            borderRadius: '16px',
-          }}
-        >
-
-          {/* ── FRENTE ──────────────────────────────────────────────────── */}
-          <div style={{
-            position: 'absolute', width: '100%', height: '100%',
-            backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-            borderRadius: '16px', overflow: 'hidden',
-            background: bloqueado ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.03)',
-            border: borda,
+            minHeight: expandido ? '200px' : '0',
           }}>
-            {/* Top bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 8px', borderBottom: '1px solid rgba(255,255,255,0.04)', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                {!bloqueado && countdown ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#2ecc71', boxShadow: '0 0 6px #2ecc71', flexShrink: 0 }} />
-                    <div>
-                      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(46,204,113,0.7)' }}>FECHA EM</div>
-                      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '18px', fontWeight: 900, color: '#2ecc71', lineHeight: 1, letterSpacing: '1px' }}>{countdown}</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.2)' }}>ENCERRADO</div>
-                )}
-              </div>
-              {temResultado && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', flex: 1 }}>
-                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.3)' }}>PLACAR REAL</div>
-                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '16px', fontWeight: 900, color: 'rgba(255,255,255,0.75)', letterSpacing: '3px', lineHeight: 1 }}>{resultado.g1} × {resultado.g2}</div>
-                </div>
-              )}
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '9px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(201,168,76,0.6)' }}>GRUPO {jogo.grupo}</div>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.5px' }}>{formatarData(jogo.data)} · {jogo.hora}</div>
-              </div>
+            {/* Frente */}
+            <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', background: bloqueado ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.03)', display: 'flex', flexDirection: 'column' }}>
+              {frenteContent}
             </div>
-
-            {/* Match body */}
-            <div style={{ display: 'flex', alignItems: 'center', padding: '16px 14px 14px', gap: '8px' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-                {getFlag(jogo.time1) && <img src={getFlag(jogo.time1)} alt={jogo.time1} style={{ width: '40px', height: '28px', objectFit: 'cover', borderRadius: '4px', opacity: bloqueado ? 0.5 : 1 }} />}
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: bloqueado ? 'rgba(255,255,255,0.3)' : '#fff', letterSpacing: '0.5px', lineHeight: 1 }}>{jogo.time1.toUpperCase()}</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                {bloqueado ? (
-                  <><div style={styles.scoreLocked}>{palpite?.g1 ?? '—'}</div><div style={styles.scoreSep}>×</div><div style={styles.scoreLocked}>{palpite?.g2 ?? '—'}</div></>
-                ) : (
-                  <><input style={styles.scoreInput} value={palpite?.g1 ?? ''} onChange={(e) => onChange('g1', e.target.value)} maxLength={2} inputMode="numeric" /><div style={styles.scoreSep}>×</div><input style={styles.scoreInput} value={palpite?.g2 ?? ''} onChange={(e) => onChange('g2', e.target.value)} maxLength={2} inputMode="numeric" /></>
-                )}
-              </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-                {getFlag(jogo.time2) && <img src={getFlag(jogo.time2)} alt={jogo.time2} style={{ width: '40px', height: '28px', objectFit: 'cover', borderRadius: '4px', opacity: bloqueado ? 0.5 : 1 }} />}
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: bloqueado ? 'rgba(255,255,255,0.3)' : '#fff', letterSpacing: '0.5px', lineHeight: 1, textAlign: 'right' }}>{jogo.time2.toUpperCase()}</div>
-              </div>
-            </div>
-
-            {bloqueado && feedback && <FeedbackBar feedback={feedback} />}
-
-            {!bloqueado && (
-              <div style={{ padding: '0 14px 10px' }}>
-                <button onClick={salvo ? undefined : onSalvar} style={{ width: '100%', borderRadius: '10px', padding: '11px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 900, letterSpacing: '3px', cursor: salvo ? 'default' : 'pointer', border: 'none', background: salvo ? 'rgba(46,204,113,0.08)' : salvando ? 'rgba(201,168,76,0.08)' : temPalpite ? 'linear-gradient(135deg, #C9A84C 0%, #a8752a 100%)' : 'rgba(201,168,76,0.08)', color: salvo ? '#2ecc71' : salvando ? '#C9A84C' : temPalpite ? '#000' : 'rgba(201,168,76,0.4)', boxShadow: !salvo && !salvando && temPalpite ? '0 4px 20px rgba(201,168,76,0.25)' : 'none' }}>
-                  {salvo ? '✓  PALPITE SALVO' : salvando ? 'SALVANDO...' : 'SALVAR PALPITE'}
-                </button>
-              </div>
-            )}
-
-            {/* Botão ver palpites */}
-            <div style={{ padding: '0 14px 12px' }}>
-              <button onClick={abrirModal} style={{ width: '100%', borderRadius: '10px', padding: '8px', background: 'none', border: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.25)' }}>VER PALPITES DO GRUPO</span>
-              </button>
+            {/* Verso */}
+            <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)', background: '#0d0d0d', display: 'flex', flexDirection: 'column' }}>
+              {versoContent}
             </div>
           </div>
-
-          {/* ── VERSO ───────────────────────────────────────────────────── */}
-          <div style={{
-            position: 'absolute', width: '100%', height: '100%',
-            backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-            transform: 'rotateY(180deg)',
-            borderRadius: '16px', overflow: 'hidden',
-            background: '#0d0d0d',
-            border: '1px solid rgba(201,168,76,0.2)',
-            display: 'flex', flexDirection: 'column',
-          }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-              <div>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(201,168,76,0.5)', marginBottom: '2px' }}>PALPITES DO GRUPO</div>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '15px', fontWeight: 900, color: '#fff' }}>{jogo.time1.toUpperCase()} × {jogo.time2.toUpperCase()}</div>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)', marginTop: '2px' }}>{formatarData(jogo.data)} · {jogo.hora}</div>
-              </div>
-              <button onClick={fecharModal} style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255,255,255,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-
-            {/* Lista scrollável */}
-            <div style={{ overflowY: 'auto', flex: 1, padding: '4px 0' }}>
-              {listaPalpitesGrupo.length === 0 ? (
-                <div style={{ padding: '32px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.2)', letterSpacing: '2px', textAlign: 'center' }}>NENHUM PALPITE AINDA</div>
-              ) : listaPalpitesGrupo.map(({ apelido, palpite: pal }, idx) => {
-                const isVoce = apelido === usuarioAtual;
-                const temPal = pal && pal.g1 !== undefined && pal.g2 !== undefined && pal.g1 !== '' && pal.g2 !== '';
-                return (
-                  <div key={apelido} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', background: isVoce ? 'rgba(201,168,76,0.06)' : 'transparent', borderBottom: idx < listaPalpitesGrupo.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: isVoce ? 'linear-gradient(135deg, #C9A84C, #a8752a)' : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 900, color: isVoce ? '#000' : 'rgba(255,255,255,0.4)', flexShrink: 0 }}>
-                        {apelido[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>{apelido.toUpperCase()}</span>
-                        {isVoce && <span style={{ marginLeft: '6px', fontSize: '9px', color: 'rgba(201,168,76,0.4)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '1px' }}>VOCÊ</span>}
-                      </div>
-                    </div>
-                    <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '20px', fontWeight: 900, color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.45)', letterSpacing: '3px' }}>
-                      {temPal ? `${pal.g1} × ${pal.g2}` : <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.15)', letterSpacing: '1px' }}>— × —</span>}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Fechar */}
-            <div style={{ padding: '12px 16px 16px', borderTop: '1px solid rgba(255,255,255,0.04)', flexShrink: 0 }}>
-              <button onClick={fecharModal} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}>FECHAR</button>
-            </div>
-          </div>
-
-        </div>{/* fim card flip */}
-      </div>{/* fim scene */}
+        </div>
+      )}
     </>
   );
 }
