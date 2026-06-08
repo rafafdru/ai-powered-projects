@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { jogos, grupos } from '../dados';
 
 const FLAGS = {
@@ -137,233 +137,180 @@ function CardJogo({ jogo, palpite, jaFoiSalvo, salvando, foiSalvoAgora, onSalvar
   const feedback = calcularFeedback(palpite, resultado);
   const temResultado = resultado && resultado.g1 !== '' && resultado.g2 !== '';
 
-  const cardRef = useRef(null);
-  const [rect, setRect] = useState(null);
-  const [fase, setFase] = useState('idle'); // idle | girando | aberto | fechando
-
+  // Montar lista de palpites do grupo para o modal
   const listaPalpitesGrupo = Object.entries(palpitesDoGrupo).map(([apelido, pals]) => ({
     apelido,
     palpite: pals[jogo.id] || null,
   })).sort((a, b) => a.apelido.localeCompare(b.apelido));
 
-  function abrirModal() {
-    if (!cardRef.current) return;
-    const r = cardRef.current.getBoundingClientRect();
-    setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
-    setFase('abrindo');
-    // frame seguinte para o browser registrar o estado inicial antes de animar
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setFase('aberto'));
-    });
-  }
-
-  function fecharModal() {
-    setFase('fechando');
-    setTimeout(() => {
-      setFase('idle');
-      setRect(null);
-      onVirar();
-    }, 420);
-  }
-
-  useEffect(() => {
-    if (!virado && fase !== 'idle') fecharModal();
-  }, [virado]);
-
-  const borda = foiSalvoAgora
-    ? '1px solid rgba(46,204,113,0.3)'
-    : feedback === 'exato'
-    ? '1px solid rgba(46,204,113,0.2)'
-    : feedback === 'parcial'
-    ? '1px solid rgba(201,168,76,0.2)'
-    : bloqueado
-    ? '1px solid rgba(255,255,255,0.05)'
-    : '1px solid rgba(201,168,76,0.15)';
-
   return (
     <>
-      {/* Card normal */}
-      <div
-        ref={cardRef}
-        style={{
-          marginBottom: '10px',
-          borderRadius: '16px',
-          overflow: 'hidden',
-          background: bloqueado ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.03)',
-          border: borda,
-          transition: 'border-color 0.4s',
-          opacity: fase !== 'idle' ? 0 : 1,
-          transition: 'opacity 0.1s, border-color 0.4s',
-        }}
-      >
-        {/* Top bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 8px', borderBottom: '1px solid rgba(255,255,255,0.04)', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            {!bloqueado && countdown ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#2ecc71', boxShadow: '0 0 6px #2ecc71', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(46,204,113,0.7)' }}>FECHA EM</div>
-                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '18px', fontWeight: 900, color: '#2ecc71', lineHeight: 1, letterSpacing: '1px' }}>{countdown}</div>
-                </div>
+    <div
+      style={{
+        marginBottom: '10px',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        background: bloqueado ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.03)',
+        border: foiSalvoAgora
+          ? '1px solid rgba(46,204,113,0.3)'
+          : feedback === 'exato'
+          ? '1px solid rgba(46,204,113,0.2)'
+          : feedback === 'parcial'
+          ? '1px solid rgba(201,168,76,0.2)'
+          : bloqueado
+          ? '1px solid rgba(255,255,255,0.05)'
+          : '1px solid rgba(201,168,76,0.15)',
+        transition: 'border-color 0.4s',
+      }}
+    >
+      {/* Top bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 8px', borderBottom: '1px solid rgba(255,255,255,0.04)', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          {!bloqueado && countdown ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#2ecc71', boxShadow: '0 0 6px #2ecc71', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(46,204,113,0.7)' }}>FECHA EM</div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '18px', fontWeight: 900, color: '#2ecc71', lineHeight: 1, letterSpacing: '1px' }}>{countdown}</div>
               </div>
-            ) : (
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.2)' }}>ENCERRADO</div>
-            )}
-          </div>
-
-          {temResultado && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', flex: 1 }}>
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.3)' }}>PLACAR REAL</div>
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '16px', fontWeight: 900, color: 'rgba(255,255,255,0.75)', letterSpacing: '3px', lineHeight: 1 }}>{resultado.g1} × {resultado.g2}</div>
             </div>
+          ) : (
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.2)' }}>ENCERRADO</div>
           )}
-
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '9px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(201,168,76,0.6)' }}>GRUPO {jogo.grupo}</div>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.5px' }}>{formatarData(jogo.data)} · {jogo.hora}</div>
-          </div>
         </div>
 
-        {/* Match body */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: '16px 14px 14px', gap: '8px' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-            {getFlag(jogo.time1) && <img src={getFlag(jogo.time1)} alt={jogo.time1} style={{ width: '40px', height: '28px', objectFit: 'cover', borderRadius: '4px', opacity: bloqueado ? 0.5 : 1, boxShadow: bloqueado ? 'none' : '0 2px 8px rgba(0,0,0,0.4)' }} />}
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: bloqueado ? 'rgba(255,255,255,0.3)' : '#fff', letterSpacing: '0.5px', lineHeight: 1 }}>{jogo.time1.toUpperCase()}</div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-            {bloqueado ? (
-              <>
-                <div style={styles.scoreLocked}>{palpite?.g1 ?? '—'}</div>
-                <div style={styles.scoreSep}>×</div>
-                <div style={styles.scoreLocked}>{palpite?.g2 ?? '—'}</div>
-              </>
-            ) : (
-              <>
-                <input style={styles.scoreInput} value={palpite?.g1 ?? ''} onChange={(e) => onChange('g1', e.target.value)} maxLength={2} inputMode="numeric" />
-                <div style={styles.scoreSep}>×</div>
-                <input style={styles.scoreInput} value={palpite?.g2 ?? ''} onChange={(e) => onChange('g2', e.target.value)} maxLength={2} inputMode="numeric" />
-              </>
-            )}
-          </div>
-
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-            {getFlag(jogo.time2) && <img src={getFlag(jogo.time2)} alt={jogo.time2} style={{ width: '40px', height: '28px', objectFit: 'cover', borderRadius: '4px', opacity: bloqueado ? 0.5 : 1, boxShadow: bloqueado ? 'none' : '0 2px 8px rgba(0,0,0,0.4)' }} />}
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: bloqueado ? 'rgba(255,255,255,0.3)' : '#fff', letterSpacing: '0.5px', lineHeight: 1, textAlign: 'right' }}>{jogo.time2.toUpperCase()}</div>
-          </div>
-        </div>
-
-        {bloqueado && feedback && <FeedbackBar feedback={feedback} />}
-
-        {!bloqueado && (
-          <div style={{ padding: '0 14px 10px' }}>
-            <button onClick={salvo ? undefined : onSalvar} style={{ width: '100%', borderRadius: '10px', padding: '11px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 900, letterSpacing: '3px', cursor: salvo ? 'default' : 'pointer', transition: 'all 0.25s', border: 'none', background: salvo ? 'rgba(46,204,113,0.08)' : salvando ? 'rgba(201,168,76,0.08)' : temPalpite ? 'linear-gradient(135deg, #C9A84C 0%, #a8752a 100%)' : 'rgba(201,168,76,0.08)', color: salvo ? '#2ecc71' : salvando ? '#C9A84C' : temPalpite ? '#000' : 'rgba(201,168,76,0.4)', boxShadow: !salvo && !salvando && temPalpite ? '0 4px 20px rgba(201,168,76,0.25)' : 'none' }}>
-              {salvo ? '✓  PALPITE SALVO' : salvando ? 'SALVANDO...' : 'SALVAR PALPITE'}
-            </button>
+        {temResultado && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', flex: 1 }}>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.3)' }}>PLACAR REAL</div>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '16px', fontWeight: 900, color: 'rgba(255,255,255,0.75)', letterSpacing: '3px', lineHeight: 1 }}>{resultado.g1} × {resultado.g2}</div>
           </div>
         )}
 
-        {/* Botão ver palpites */}
-        <div style={{ padding: '0 14px 12px' }}>
-          <button onClick={abrirModal} style={{ width: '100%', borderRadius: '10px', padding: '8px', background: 'none', border: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <circle cx="6.5" cy="6.5" r="5.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2"/>
-              <circle cx="4" cy="6.5" r="1" fill="rgba(255,255,255,0.25)"/>
-              <circle cx="6.5" cy="6.5" r="1" fill="rgba(255,255,255,0.25)"/>
-              <circle cx="9" cy="6.5" r="1" fill="rgba(255,255,255,0.25)"/>
-            </svg>
-            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.25)' }}>VER PALPITES DO GRUPO</span>
-          </button>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '9px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(201,168,76,0.6)' }}>GRUPO {jogo.grupo}</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.5px' }}>{formatarData(jogo.data)} · {jogo.hora}</div>
         </div>
       </div>
 
-      {/* Overlay escuro — fade suave */}
-      {fase !== 'idle' && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 298,
-          background: fase === 'aberto' ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0)',
-          backdropFilter: fase === 'aberto' ? 'blur(20px) saturate(180%)' : 'blur(0px)',
-          WebkitBackdropFilter: fase === 'aberto' ? 'blur(20px) saturate(180%)' : 'blur(0px)',
-          transition: 'background 0.4s ease, backdrop-filter 0.4s ease, -webkit-backdrop-filter 0.4s ease',
-          pointerEvents: fase === 'aberto' ? 'auto' : 'none',
-        }} onClick={fecharModal} />
+      {/* Match body */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '16px 14px 14px', gap: '8px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+          {getFlag(jogo.time1) && (
+            <img src={getFlag(jogo.time1)} alt={jogo.time1} style={{ width: '40px', height: '28px', objectFit: 'cover', borderRadius: '4px', opacity: bloqueado ? 0.5 : 1, boxShadow: bloqueado ? 'none' : '0 2px 8px rgba(0,0,0,0.4)' }} />
+          )}
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: bloqueado ? 'rgba(255,255,255,0.3)' : '#fff', letterSpacing: '0.5px', lineHeight: 1 }}>{jogo.time1.toUpperCase()}</div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          {bloqueado ? (
+            <>
+              <div style={styles.scoreLocked}>{palpite?.g1 ?? '—'}</div>
+              <div style={styles.scoreSep}>×</div>
+              <div style={styles.scoreLocked}>{palpite?.g2 ?? '—'}</div>
+            </>
+          ) : (
+            <>
+              <input style={styles.scoreInput} value={palpite?.g1 ?? ''} onChange={(e) => onChange('g1', e.target.value)} maxLength={2} inputMode="numeric" />
+              <div style={styles.scoreSep}>×</div>
+              <input style={styles.scoreInput} value={palpite?.g2 ?? ''} onChange={(e) => onChange('g2', e.target.value)} maxLength={2} inputMode="numeric" />
+            </>
+          )}
+        </div>
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+          {getFlag(jogo.time2) && (
+            <img src={getFlag(jogo.time2)} alt={jogo.time2} style={{ width: '40px', height: '28px', objectFit: 'cover', borderRadius: '4px', opacity: bloqueado ? 0.5 : 1, boxShadow: bloqueado ? 'none' : '0 2px 8px rgba(0,0,0,0.4)' }} />
+          )}
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: bloqueado ? 'rgba(255,255,255,0.3)' : '#fff', letterSpacing: '0.5px', lineHeight: 1, textAlign: 'right' }}>{jogo.time2.toUpperCase()}</div>
+        </div>
+      </div>
+
+      {bloqueado && feedback && <FeedbackBar feedback={feedback} />}
+
+      {!bloqueado && (
+        <div style={{ padding: '0 14px 14px' }}>
+          <button onClick={salvo ? undefined : onSalvar} style={{
+            width: '100%', borderRadius: '10px', padding: '11px',
+            fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 900, letterSpacing: '3px',
+            cursor: salvo ? 'default' : 'pointer', transition: 'all 0.25s', border: 'none',
+            background: salvo ? 'rgba(46,204,113,0.08)' : salvando ? 'rgba(201,168,76,0.08)' : temPalpite ? 'linear-gradient(135deg, #C9A84C 0%, #a8752a 100%)' : 'rgba(201,168,76,0.08)',
+            color: salvo ? '#2ecc71' : salvando ? '#C9A84C' : temPalpite ? '#000' : 'rgba(201,168,76,0.4)',
+            boxShadow: !salvo && !salvando && temPalpite ? '0 4px 20px rgba(201,168,76,0.25)' : 'none',
+          }}>
+            {salvo ? '✓  PALPITE SALVO' : salvando ? 'SALVANDO...' : 'SALVAR PALPITE'}
+          </button>
+        </div>
       )}
 
-      {/* Card animado — estilo Apple: expande do ponto de origem */}
-      {fase !== 'idle' && rect && (
-        <div style={{
-          position: 'fixed',
-          zIndex: 299,
-          top: fase === 'aberto' ? '50%' : rect.top + rect.height / 2,
-          left: fase === 'aberto' ? '50%' : rect.left + rect.width / 2,
-          width: fase === 'aberto' ? 'min(460px, 92vw)' : rect.width,
-          height: fase === 'aberto' ? '80vh' : rect.height,
-          transform: fase === 'aberto'
-            ? 'translate(-50%, -50%) scale(1)'
-            : fase === 'abrindo'
-            ? 'translate(-50%, -50%) scale(0.92)'
-            : 'translate(-50%, -50%) scale(0.88)',
-          opacity: fase === 'aberto' ? 1 : fase === 'abrindo' ? 0 : 0,
-          transformOrigin: 'center center',
-          transition: fase === 'aberto'
-            ? 'top 0.48s cubic-bezier(0.32, 0.72, 0, 1), left 0.48s cubic-bezier(0.32, 0.72, 0, 1), width 0.48s cubic-bezier(0.32, 0.72, 0, 1), height 0.48s cubic-bezier(0.32, 0.72, 0, 1), transform 0.48s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease'
-            : fase === 'fechando'
-            ? 'top 0.38s cubic-bezier(0.32, 0.72, 0, 1), left 0.38s cubic-bezier(0.32, 0.72, 0, 1), width 0.38s cubic-bezier(0.32, 0.72, 0, 1), height 0.38s cubic-bezier(0.32, 0.72, 0, 1), transform 0.38s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease'
-            : 'none',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          background: '#0d0d0d',
-          border: '1px solid rgba(201,168,76,0.25)',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+      {/* Botão ver palpites do grupo */}
+      <div style={{ padding: '0 14px 12px', marginTop: bloqueado ? '0' : '-4px' }}>
+        <button onClick={onVirar} style={{
+          width: '100%', borderRadius: '10px', padding: '8px',
+          background: 'none', border: '1px solid rgba(255,255,255,0.07)',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
         }}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <circle cx="6.5" cy="6.5" r="5.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2"/>
+            <circle cx="4" cy="6.5" r="1" fill="rgba(255,255,255,0.25)"/>
+            <circle cx="6.5" cy="6.5" r="1" fill="rgba(255,255,255,0.25)"/>
+            <circle cx="9" cy="6.5" r="1" fill="rgba(255,255,255,0.25)"/>
+          </svg>
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.25)' }}>VER PALPITES DO GRUPO</span>
+        </button>
+      </div>
+    </div>
+
+    {/* Modal palpites do grupo */}
+    {virado && (
+      <div onClick={onVirar} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '480px', background: '#0d0d0d', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '24px 24px 0 0', paddingBottom: 'env(safe-area-inset-bottom)', overflow: 'hidden' }}>
 
           {/* Handle */}
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
             <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.12)' }} />
           </div>
 
           {/* Header */}
-          <div style={{ padding: '10px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+          <div style={{ padding: '14px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(201,168,76,0.5)', marginBottom: '2px' }}>PALPITES DO GRUPO</div>
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '16px', fontWeight: 900, color: '#fff', letterSpacing: '0.5px' }}>{jogo.time1.toUpperCase()} × {jogo.time2.toUpperCase()}</div>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '10px', color: 'rgba(255,255,255,0.25)', marginTop: '2px' }}>{formatarData(jogo.data)} · {jogo.hora}</div>
           </div>
 
           {/* Lista scrollável */}
-          <div style={{ overflowY: 'auto', flex: 1 }}>
+          <div style={{ overflowY: 'auto', maxHeight: '55vh' }}>
             {listaPalpitesGrupo.length === 0 ? (
               <div style={{ padding: '32px 18px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.2)', letterSpacing: '2px', textAlign: 'center' }}>NENHUM PALPITE AINDA</div>
-            ) : listaPalpitesGrupo.map(({ apelido, palpite: pal }, idx) => {
-              const isVoce = apelido === usuarioAtual;
-              const temPal = pal && pal.g1 !== undefined && pal.g2 !== undefined && pal.g1 !== '' && pal.g2 !== '';
-              return (
-                <div key={apelido} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', background: isVoce ? 'rgba(201,168,76,0.06)' : 'transparent', borderBottom: idx < listaPalpitesGrupo.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: isVoce ? 'linear-gradient(135deg, #C9A84C, #a8752a)' : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 900, color: isVoce ? '#000' : 'rgba(255,255,255,0.4)', flexShrink: 0 }}>
-                      {apelido[0].toUpperCase()}
+            ) : (
+              listaPalpitesGrupo.map(({ apelido, palpite: pal }, idx) => {
+                const isVoce = apelido === usuarioAtual;
+                const temPal = pal && pal.g1 !== undefined && pal.g2 !== undefined && pal.g1 !== '' && pal.g2 !== '';
+                return (
+                  <div key={apelido} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', background: isVoce ? 'rgba(201,168,76,0.06)' : 'transparent', borderBottom: idx < listaPalpitesGrupo.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: isVoce ? 'linear-gradient(135deg, #C9A84C, #a8752a)' : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '12px', fontWeight: 900, color: isVoce ? '#000' : 'rgba(255,255,255,0.4)', flexShrink: 0 }}>
+                        {apelido[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '14px', fontWeight: 700, color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.7)', letterSpacing: '0.3px' }}>{apelido.toUpperCase()}</span>
+                        {isVoce && <span style={{ marginLeft: '6px', fontSize: '9px', color: 'rgba(201,168,76,0.4)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '1px' }}>VOCÊ</span>}
+                      </div>
                     </div>
-                    <div>
-                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '15px', fontWeight: 700, color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.7)', letterSpacing: '0.3px' }}>{apelido.toUpperCase()}</span>
-                      {isVoce && <span style={{ marginLeft: '6px', fontSize: '9px', color: 'rgba(201,168,76,0.4)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '1px' }}>VOCÊ</span>}
-                    </div>
+                    <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '18px', fontWeight: 900, color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.4)', letterSpacing: '2px' }}>
+                      {temPal ? `${pal.g1} × ${pal.g2}` : <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.15)', letterSpacing: '1px' }}>— × —</span>}
+                    </span>
                   </div>
-                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '20px', fontWeight: 900, color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.4)', letterSpacing: '3px' }}>
-                    {temPal ? `${pal.g1} × ${pal.g2}` : <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.15)', letterSpacing: '1px' }}>— × —</span>}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
 
           {/* Fechar */}
-          <div style={{ padding: '12px 18px 20px', borderTop: '1px solid rgba(255,255,255,0.04)', flexShrink: 0 }}>
-            <button onClick={fecharModal} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}>FECHAR</button>
+          <div style={{ padding: '12px 18px 16px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            <button onClick={onVirar} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '13px', fontWeight: 700, letterSpacing: '3px', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}>FECHAR</button>
           </div>
         </div>
-      )}
+      </div>
+    )}
     </>
   );
 }
@@ -582,10 +529,6 @@ export default function Jogos({ usuario, palpites, onSalvar, resultados, palpite
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;500;600&display=swap');
         * { box-sizing: border-box; }
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
-        @keyframes slideUpModal {
-          from { transform: translateY(100%); opacity: 0; }
-          to   { transform: translateY(0);    opacity: 1; }
-        }
       `}</style>
     </div>
   );
