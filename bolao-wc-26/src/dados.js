@@ -55,14 +55,6 @@ export const jogos = [
   // 13/06 (sáb)
   {
     id: 20,
-    grupo: 'D',
-    time1: 'Austrália',
-    time2: 'Turquia',
-    data: '2026-06-13',
-    hora: '01:00',
-  },
-  {
-    id: 8,
     grupo: 'B',
     time1: 'Catar',
     time2: 'Suíça',
@@ -70,7 +62,7 @@ export const jogos = [
     hora: '16:00',
   },
   {
-    id: 13,
+    id: 8,
     grupo: 'C',
     time1: 'Brasil',
     time2: 'Marrocos',
@@ -78,12 +70,20 @@ export const jogos = [
     hora: '19:00',
   },
   {
-    id: 14,
+    id: 13,
     grupo: 'C',
     time1: 'Haiti',
     time2: 'Escócia',
     data: '2026-06-13',
     hora: '22:00',
+  },
+  {
+    id: 14,
+    grupo: 'D',
+    time1: 'Austrália',
+    time2: 'Turquia',
+    data: '2026-06-14',
+    hora: '01:00',
   },
 
   // 14/06 (dom)
@@ -434,16 +434,16 @@ export const jogos = [
   {
     id: 11,
     grupo: 'B',
-    time1: 'Suíça',
-    time2: 'Canadá',
+    time1: 'Bósnia-Herzegovina',
+    time2: 'Catar',
     data: '2026-06-24',
     hora: '16:00',
   },
   {
     id: 12,
-    grupo: 'B',
-    time1: 'Bósnia-Herzegovina',
-    time2: 'Catar',
+    grupo: 'C',
+    time1: 'Suíça',
+    time2: 'Canadá',
     data: '2026-06-24',
     hora: '16:00',
   },
