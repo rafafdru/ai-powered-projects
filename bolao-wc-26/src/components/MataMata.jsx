@@ -69,29 +69,34 @@ const FASES = [
   {
     id: 'r16',
     nome: 'OITAVAS DE FINAL',
-    jogos: Array.from({ length: 8 }, (_, i) => ({
-      id: `r16_${i + 1}`,
-      data: '2026-07-04',
-      hora: '14:00',
-    })),
+    jogos: [
+      { id: 'r16_1', data: '2026-07-04', hora: '14:00' },
+      { id: 'r16_2', data: '2026-07-04', hora: '18:00' },
+      { id: 'r16_3', data: '2026-07-05', hora: '17:00' },
+      { id: 'r16_4', data: '2026-07-05', hora: '21:00' },
+      { id: 'r16_5', data: '2026-07-06', hora: '16:00' },
+      { id: 'r16_6', data: '2026-07-06', hora: '21:00' },
+      { id: 'r16_7', data: '2026-07-07', hora: '13:00' },
+      { id: 'r16_8', data: '2026-07-07', hora: '17:00' },
+    ],
   },
   {
     id: 'qf',
     nome: 'QUARTAS DE FINAL',
-    jogos: Array.from({ length: 4 }, (_, i) => ({
-      id: `qf_${i + 1}`,
-      data: '2026-07-09',
-      hora: '18:00',
-    })),
+    jogos: [
+      { id: 'qf_1', data: '2026-07-09', hora: '17:00' },
+      { id: 'qf_2', data: '2026-07-10', hora: '16:00' },
+      { id: 'qf_3', data: '2026-07-11', hora: '18:00' },
+      { id: 'qf_4', data: '2026-07-11', hora: '22:00' },
+    ],
   },
   {
     id: 'sf',
     nome: 'SEMIFINAIS',
-    jogos: Array.from({ length: 2 }, (_, i) => ({
-      id: `sf_${i + 1}`,
-      data: '2026-07-14',
-      hora: '18:00',
-    })),
+    jogos: [
+      { id: 'sf_1', data: '2026-07-14', hora: '16:00' },
+      { id: 'sf_2', data: '2026-07-15', hora: '16:00' },
+    ],
   },
   {
     id: 'third',
