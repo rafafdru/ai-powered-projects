@@ -84,7 +84,7 @@ const FASES = [
     id: 'qf',
     nome: 'QUARTAS DE FINAL',
     jogos: [
-      { id: 'qf_1', data: '2026-07-09', hora: '17:00' },
+      { id: 'qf_1', data: '2026-07-09', hora: '17:10' },
       { id: 'qf_2', data: '2026-07-10', hora: '16:00' },
       { id: 'qf_3', data: '2026-07-11', hora: '18:00' },
       { id: 'qf_4', data: '2026-07-11', hora: '22:00' },
