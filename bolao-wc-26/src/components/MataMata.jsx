@@ -258,6 +258,10 @@ function CardMM({
   onChange,
   numero,
   resultado,
+  palpitesDoGrupo,
+  virado,
+  onVirar,
+  usuarioAtual,
 }) {
   const bloqueado = isBloqueado(jogo.data, jogo.hora);
   const countdown = useCountdown(jogo.data, jogo.hora);
@@ -268,7 +272,16 @@ function CardMM({
   const feedback = calcularFeedback(palpite, resultado);
   const temResultado = resultado && resultado.g1 !== '' && resultado.g2 !== '';
 
+  // Montar lista de palpites do grupo para o modal
+  const listaPalpitesGrupo = Object.entries(palpitesDoGrupo || {})
+    .map(([apelido, pals]) => ({
+      apelido,
+      palpite: pals[jogo.id] || null,
+    }))
+    .sort((a, b) => a.apelido.localeCompare(b.apelido));
+
   return (
+    <>
     <div
       style={{
         margin: '0 14px 10px',
@@ -612,7 +625,246 @@ function CardMM({
           </button>
         </div>
       )}
+
+      {/* Botão ver palpites do grupo */}
+      <div
+        style={{
+          padding: '0 14px 12px',
+          marginTop: bloqueado ? '0' : '-4px',
+        }}
+      >
+        <button
+          onClick={onVirar}
+          style={{
+            width: '100%',
+            borderRadius: '10px',
+            padding: '8px',
+            background: 'none',
+            border: '1px solid rgba(255,255,255,0.07)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <circle cx="6.5" cy="6.5" r="5.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2"/>
+            <circle cx="4" cy="6.5" r="1" fill="rgba(255,255,255,0.25)"/>
+            <circle cx="6.5" cy="6.5" r="1" fill="rgba(255,255,255,0.25)"/>
+            <circle cx="9" cy="6.5" r="1" fill="rgba(255,255,255,0.25)"/>
+          </svg>
+          <span
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: '10px',
+              fontWeight: 700,
+              letterSpacing: '2px',
+              color: 'rgba(255,255,255,0.25)',
+            }}
+          >
+            VER PALPITES DO GRUPO
+          </span>
+        </button>
+      </div>
     </div>
+
+    {/* Modal palpites do grupo */}
+    {virado && (
+      <div
+        onClick={onVirar}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 300,
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+        }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            width: '100%',
+            maxWidth: '480px',
+            background: '#0d0d0d',
+            border: '1px solid rgba(201,168,76,0.2)',
+            borderRadius: '24px 24px 0 0',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Handle */}
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+            <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.12)' }} />
+          </div>
+
+          {/* Header */}
+          <div style={{ padding: '14px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <div
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: '8px',
+                fontWeight: 700,
+                letterSpacing: '3px',
+                color: 'rgba(201,168,76,0.5)',
+                marginBottom: '2px',
+              }}
+            >
+              PALPITES DO GRUPO
+            </div>
+            <div
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: '16px',
+                fontWeight: 900,
+                color: '#fff',
+                letterSpacing: '0.5px',
+              }}
+            >
+              {dadosJogo?.time1 ? dadosJogo.time1.toUpperCase() : '???'} ×{' '}
+              {dadosJogo?.time2 ? dadosJogo.time2.toUpperCase() : '???'}
+            </div>
+          </div>
+
+          {/* Lista scrollável */}
+          <div style={{ overflowY: 'auto', maxHeight: '55vh' }}>
+            {listaPalpitesGrupo.length === 0 ? (
+              <div
+                style={{
+                  padding: '32px 18px',
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.2)',
+                  letterSpacing: '2px',
+                  textAlign: 'center',
+                }}
+              >
+                NENHUM PALPITE AINDA
+              </div>
+            ) : (
+              listaPalpitesGrupo.map(({ apelido, palpite: pal }, idx) => {
+                const isVoce = apelido === usuarioAtual;
+                const temPal =
+                  pal &&
+                  pal.g1 !== undefined &&
+                  pal.g2 !== undefined &&
+                  pal.g1 !== '' &&
+                  pal.g2 !== '';
+                return (
+                  <div
+                    key={apelido}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '11px 18px',
+                      background: isVoce ? 'rgba(201,168,76,0.06)' : 'transparent',
+                      borderBottom:
+                        idx < listaPalpitesGrupo.length - 1
+                          ? '1px solid rgba(255,255,255,0.03)'
+                          : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div
+                        style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          background: isVoce
+                            ? 'linear-gradient(135deg, #C9A84C, #a8752a)'
+                            : 'rgba(255,255,255,0.06)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontFamily: "'Barlow Condensed', sans-serif",
+                          fontSize: '12px',
+                          fontWeight: 900,
+                          color: isVoce ? '#000' : 'rgba(255,255,255,0.4)',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {apelido[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <span
+                          style={{
+                            fontFamily: "'Barlow Condensed', sans-serif",
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.7)',
+                            letterSpacing: '0.3px',
+                          }}
+                        >
+                          {apelido.toUpperCase()}
+                        </span>
+                        {isVoce && (
+                          <span
+                            style={{
+                              marginLeft: '6px',
+                              fontSize: '9px',
+                              color: 'rgba(201,168,76,0.4)',
+                              fontFamily: "'Barlow Condensed', sans-serif",
+                              fontWeight: 700,
+                              letterSpacing: '1px',
+                            }}
+                          >
+                            VOCÊ
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontSize: '18px',
+                        fontWeight: 900,
+                        color: isVoce ? '#C9A84C' : 'rgba(255,255,255,0.4)',
+                        letterSpacing: '2px',
+                      }}
+                    >
+                      {temPal ? (
+                        `${pal.g1} × ${pal.g2}`
+                      ) : (
+                        <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.15)', letterSpacing: '1px' }}>
+                          — × —
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Fechar */}
+          <div style={{ padding: '12px 18px 16px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            <button
+              onClick={onVirar}
+              style={{
+                width: '100%',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '12px',
+                padding: '12px',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: '13px',
+                fontWeight: 700,
+                letterSpacing: '3px',
+                color: 'rgba(255,255,255,0.35)',
+                cursor: 'pointer',
+              }}
+            >
+              FECHAR
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
@@ -656,10 +908,13 @@ export default function MataMata({
   onSalvar,
   faseAtiva,
   resultados,
+  palpitesDoGrupo = {},
+  usuarioAtual,
 }) {
   const [editando, setEditando] = useState({});
   const [salvandoId, setSalvandoId] = useState(null);
   const [savedIds, setSavedIds] = useState({});
+  const [cardVirado, setCardVirado] = useState(null); // jogoId do card virado
 
   function handleChange(jogoId, campo, valor) {
     const num = valor.replace(/\D/g, '').slice(0, 2);
@@ -850,6 +1105,12 @@ export default function MataMata({
                   }
                   numero={i + 1}
                   resultado={resultados?.[jogo.id] || null}
+                  palpitesDoGrupo={palpitesDoGrupo}
+                  virado={cardVirado === jogo.id}
+                  onVirar={() =>
+                    setCardVirado(cardVirado === jogo.id ? null : jogo.id)
+                  }
+                  usuarioAtual={usuarioAtual}
                 />
               ))
             )}
