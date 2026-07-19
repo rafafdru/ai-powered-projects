@@ -106,7 +106,7 @@ const FASES = [
   {
     id: 'final',
     nome: 'FINAL',
-    jogos: [{ id: 'final_1', data: '2026-07-19', hora: '16:00' }],
+    jogos: [{ id: 'final_1', data: '2026-07-19', hora: '16:10' }],
   },
 ];
 
